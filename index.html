@@ -1,1 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Odette — Money Tracker</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Odette">
+<meta name="theme-color" content="#5BAD8F">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{font-family:'Jost',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .3s,color .3s}
+:root{
+  --acc:#5BAD8F;--acc2:#84C4A8;--acc-t:rgba(91,173,143,0.14);
+  --inc:#5BAD8F;--exp:#D97B7B;
+  --bg:#F0F7F4;--bg2:#FFFFFF;--bg3:#E4F0EB;--bg4:#D4E8DF;
+  --txt:#243B30;--txt2:#5A7A6C;--txt3:#8AABA0;
+  --bdr:rgba(91,173,143,0.18);--rad:16px;--rad-sm:10px;
+}
+.theme-sage{--acc:#7BAF8E;--acc2:#A2C9B4;--acc-t:rgba(123,175,142,0.14);--bg:#EEF4F0;--bg2:#F9FCF9;--bg3:#DFF0E6;--bg4:#CCE4D5;--txt:#1E3328;--txt2:#4D7260;--txt3:#80A695;}
+.theme-forest{--acc:#3D7A5E;--acc2:#5C9E7D;--acc-t:rgba(61,122,94,0.15);--bg:#E6F0EB;--bg2:#F5FAF7;--bg3:#D4E8DC;--bg4:#C0DACC;--txt:#1A2E23;--txt2:#3D6B53;--txt3:#6B9A84;}
+.theme-dark{--acc:#6EC4A0;--acc2:#93D4B6;--acc-t:rgba(110,196,160,0.15);--inc:#6EC4A0;--exp:#F08080;--bg:#0D1F18;--bg2:#122A20;--bg3:#1A3829;--bg4:#214532;--txt:#E2F5ED;--txt2:#7FB89E;--txt3:#4D8A70;--bdr:rgba(110,196,160,0.12);}
+.theme-cream{--acc:#8AB89A;--acc2:#AECEBB;--acc-t:rgba(138,184,154,0.15);--inc:#6EA882;--exp:#C97A6A;--bg:#FAFAF5;--bg2:#FFFFFF;--bg3:#F0F5ED;--bg4:#E4EDE7;--txt:#2E3D30;--txt2:#647A68;--txt3:#9AB09C;--bdr:rgba(0,0,0,0.07);}
+.theme-rose{--acc:#D4848A;--acc2:#E8A8AC;--acc-t:rgba(212,132,138,0.13);--inc:#7BA88A;--exp:#D4848A;--bg:#FDF5F5;--bg2:#FFFFFF;--bg3:#F8ECEC;--bg4:#F2E0E0;--txt:#3A1F22;--txt2:#8A5A5D;--txt3:#B88A8D;--bdr:rgba(212,132,138,0.18);}
+.theme-sky{--acc:#6BA4C8;--acc2:#92BEDB;--acc-t:rgba(107,164,200,0.14);--inc:#6BA4C8;--exp:#D4847A;--bg:#F0F6FA;--bg2:#FFFFFF;--bg3:#E0EEF7;--bg4:#CCE3F0;--txt:#1A2D3D;--txt2:#4A7090;--txt3:#80A8C4;--bdr:rgba(107,164,200,0.18);}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.nav{display:flex;align-items:center;gap:2px;padding:10px 16px;background:var(--bg2);border-bottom:1.5px solid var(--bdr);position:sticky;top:0;z-index:100;flex-wrap:nowrap;overflow-x:auto}
+.brand{font-family:'Playfair Display',serif;font-size:20px;color:var(--txt);margin-right:auto;font-style:italic;white-space:nowrap}
+.brand em{color:var(--acc);font-style:normal}
+.nav-btn{background:none;border:none;color:var(--txt3);padding:7px 10px;border-radius:var(--rad-sm);cursor:pointer;font-size:12px;font-family:'Jost',sans-serif;display:flex;align-items:center;gap:4px;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.nav-btn:hover{color:var(--txt);background:var(--bg3)}
+.nav-btn.active{color:var(--acc);background:var(--acc-t);font-weight:500}
+.nav-btn i{font-size:16px}
+.content{flex:1;padding:16px 16px 60px;max-width:680px;margin:0 auto;width:100%}
+.page{display:none;animation:fadeUp .2s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--bg2);border:1.5px solid var(--bdr);border-radius:var(--rad);padding:16px 18px;margin-bottom:12px}
+.hero{text-align:center;padding:32px 20px 24px;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:var(--rad);margin-bottom:12px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:280px;height:280px;border-radius:50%;background:var(--acc-t);filter:blur(60px);pointer-events:none}
+.hero::after{content:'✿';position:absolute;top:10px;right:14px;font-size:20px;opacity:.15;color:var(--acc)}
+.hero-lbl{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;font-weight:500}
+.hero-amt{font-family:'Playfair Display',serif;font-size:48px;line-height:1;color:var(--txt);margin-bottom:6px}
+.hero-amt.neg{color:var(--exp)}
+.hero-sub{font-size:12px;color:var(--txt3)}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:var(--bg2);border:1.5px solid var(--bdr);border-radius:var(--rad);padding:12px 14px}
+.stat-lbl{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:flex;align-items:center;gap:4px;font-weight:500}
+.stat-val{font-size:20px;font-weight:500}
+.stat-val.inc{color:var(--inc)}
+.stat-val.exp{color:var(--exp)}
+.tx-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border-radius:var(--rad-sm);margin-bottom:6px;border:1.5px solid var(--bdr);transition:border-color .15s}
+.tx-item:hover{border-color:var(--acc);background:var(--bg3)}
+.tx-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.tx-icon.income{background:rgba(91,173,143,0.15);color:var(--inc)}
+.tx-icon.expense{background:rgba(217,123,123,0.15);color:var(--exp)}
+.tx-body{flex:1;min-width:0}
+.tx-name{font-size:13px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-size:11px;color:var(--txt3);margin-top:1px}
+.tx-amt{font-size:13px;font-weight:500;flex-shrink:0}
+.tx-amt.income{color:var(--inc)}
+.tx-amt.expense{color:var(--exp)}
+.tx-del{background:none;border:none;color:var(--txt3);cursor:pointer;padding:4px;font-size:15px;border-radius:4px;transition:color .15s;flex-shrink:0}
+.tx-del:hover{color:var(--exp)}
+.empty{text-align:center;padding:32px;color:var(--txt3);font-size:13px}
+.empty i{font-size:30px;display:block;margin-bottom:8px}
+.form-title{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:14px;font-style:italic}
+.type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.type-btn{padding:10px;border:1.5px solid var(--bdr);border-radius:var(--rad-sm);background:none;color:var(--txt2);cursor:pointer;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.type-btn.is-inc{border-color:var(--inc);background:rgba(91,173,143,0.12);color:var(--inc)}
+.type-btn.is-exp{border-color:var(--exp);background:rgba(217,123,123,0.12);color:var(--exp)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.fg input,.fg select{background:var(--bg3);border:1.5px solid var(--bdr);border-radius:var(--rad-sm);color:var(--txt);padding:9px 11px;font-size:14px;font-family:'Jost',sans-serif;width:100%;transition:border-color .15s;outline:none}
+.fg input:focus,.fg select:focus{border-color:var(--acc)}
+.fg select option{background:var(--bg2);color:var(--txt)}
+.submit-btn{width:100%;padding:12px;background:var(--acc);border:none;border-radius:var(--rad-sm);color:#fff;font-family:'Playfair Display',serif;font-size:16px;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.submit-btn:hover{opacity:.88}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav-btn{background:var(--bg3);border:1.5px solid var(--bdr);border-radius:var(--rad-sm);color:var(--txt);padding:7px 12px;cursor:pointer;font-size:16px;transition:background .15s}
+.cal-nav-btn:hover{background:var(--bg4)}
+.cal-month{font-family:'Playfair Display',serif;font-size:20px;font-style:italic}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:14px}
+.cal-dh{text-align:center;font-size:10px;color:var(--txt3);text-transform:uppercase;padding:4px 0;letter-spacing:.06em}
+.cal-cell{aspect-ratio:1;background:var(--bg2);border-radius:7px;border:1.5px solid var(--bdr);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.cal-cell:hover{border-color:var(--acc);background:var(--bg3)}
+.cal-cell.today{border-color:var(--acc);background:var(--acc-t)}
+.cal-cell.selected{background:var(--acc);border-color:var(--acc)}
+.cal-cell.selected .cal-dn{color:#fff}
+.cal-cell.empty{background:transparent;border-color:transparent;cursor:default}
+.cal-cell.empty:hover{border-color:transparent;background:transparent}
+.cal-dn{font-size:11px;font-weight:500;color:var(--txt2)}
+.cal-cell.today .cal-dn{color:var(--acc)}
+.cal-dots{display:flex;gap:2px;margin-top:2px}
+.cdot{width:4px;height:4px;border-radius:50%}
+.cdot.inc{background:var(--inc)}
+.cdot.exp{background:var(--exp)}
+.cal-detail{background:var(--bg2);border:1.5px solid var(--bdr);border-radius:var(--rad);padding:14px 16px;margin-bottom:12px}
+.cal-det-title{font-size:14px;font-weight:500;color:var(--txt2);margin-bottom:8px;font-family:'Playfair Display',serif;font-style:italic}
+.cal-sum{display:flex;gap:12px;margin-bottom:10px;font-size:12px}
+.legend-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;font-size:11px;color:var(--txt2)}
+.legend-row span{display:flex;align-items:center;gap:4px}
+.ldot{width:9px;height:9px;border-radius:2px;display:inline-block}
+.calc-sub{font-size:12px;color:var(--txt3);margin-bottom:16px}
+.calc-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end;margin-bottom:12px}
+.calc-mid{display:flex;align-items:center;padding-bottom:1px;padding-top:18px}
+.swap-btn{background:var(--bg3);border:1.5px solid var(--bdr);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:var(--acc);transition:all .2s}
+.swap-btn:hover{background:var(--acc);color:#fff;border-color:var(--acc);transform:rotate(180deg)}
+.calc-result{background:var(--acc-t);border:1.5px solid var(--acc);border-radius:var(--rad-sm);padding:12px 14px;text-align:center;margin-bottom:12px}
+.calc-result-num{font-family:'Playfair Display',serif;font-size:26px;color:var(--txt);margin-bottom:2px}
+.calc-result-lbl{font-size:11px;color:var(--txt3)}
+.rate-info{text-align:center;font-size:11px;color:var(--txt3);margin-bottom:14px}
+.rate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rate-card{background:var(--bg3);border-radius:var(--rad-sm);padding:10px 6px;text-align:center;border:1.5px solid var(--bdr);cursor:pointer;transition:all .15s}
+.rate-card:hover,.rate-card.active{border-color:var(--acc);background:var(--acc-t)}
+.rate-flag{font-size:18px;margin-bottom:2px}
+.rate-code{font-size:12px;font-weight:500;color:var(--txt)}
+.settings-sec{background:var(--bg2);border:1.5px solid var(--bdr);border-radius:var(--rad);padding:16px 18px;margin-bottom:12px}
+.settings-sec h3{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;font-weight:500}
+.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.theme-sw{border:2px solid var(--bdr);border-radius:var(--rad-sm);padding:9px 6px;cursor:pointer;text-align:center;font-size:12px;color:var(--txt2);transition:all .15s;background:var(--bg3);font-family:'Jost',sans-serif}
+.theme-sw:hover{border-color:var(--acc2)}
+.theme-sw.active{border-color:var(--acc);color:var(--txt)}
+.theme-dot{width:18px;height:18px;border-radius:50%;margin:0 auto 5px}
+.lang-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+.lang-sw{border:1.5px solid var(--bdr);border-radius:var(--rad-sm);padding:7px 4px;text-align:center;cursor:pointer;font-size:11px;color:var(--txt2);transition:all .15s;background:var(--bg3);font-family:'Jost',sans-serif}
+.lang-sw:hover{border-color:var(--acc2)}
+.lang-sw.active{border-color:var(--acc);color:var(--acc);background:var(--acc-t)}
+.cat-list{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.cat-tag{display:flex;align-items:center;gap:8px;padding:7px 11px;background:var(--bg3);border-radius:var(--rad-sm);font-size:13px}
+.cat-tag span{flex:1}
+.cat-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px;transition:color .15s}
+.cat-del:hover{color:var(--exp)}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:var(--rad-sm);color:var(--txt);padding:9px 11px;font-size:13px;font-family:'Jost',sans-serif;outline:none;transition:border-color .15s}
+.add-row input:focus{border-color:var(--acc)}
+.add-row button{background:var(--acc);border:none;border-radius:var(--rad-sm);color:#fff;padding:9px 14px;cursor:pointer;font-size:17px;transition:opacity .15s}
+.add-row button:hover{opacity:.85}
+.danger-btn{background:rgba(217,123,123,0.1);border:1.5px solid var(--exp);border-radius:var(--rad-sm);color:var(--exp);padding:9px 16px;cursor:pointer;font-size:13px;font-family:'Jost',sans-serif;transition:background .15s}
+.danger-btn:hover{background:rgba(217,123,123,0.2)}
+.backup-btns{display:flex;gap:8px;flex-wrap:wrap}
+.backup-btn{display:flex;align-items:center;gap:6px;padding:9px 16px;background:var(--acc);border:none;border-radius:var(--rad-sm);color:#fff;font-family:'Jost',sans-serif;font-size:13px;cursor:pointer;transition:opacity .15s}
+.backup-btn:hover{opacity:.85}
+.backup-btn.outline{background:none;border:1.5px solid var(--acc);color:var(--acc)}
+.backup-btn.outline:hover{background:var(--acc-t)}
+.pin-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;animation:fadeUp .25s ease}
+.pin-brand{font-family:'Playfair Display',serif;font-size:30px;font-style:italic;color:var(--txt);margin-bottom:6px;text-align:center}
+.pin-brand em{color:var(--acc);font-style:normal}
+.pin-sub{font-size:13px;color:var(--txt3);margin-bottom:30px;text-align:center}
+.pin-dots{display:flex;gap:12px;margin-bottom:26px}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--acc);background:transparent;transition:background .12s}
+.pin-dot.filled{background:var(--acc)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:210px}
+.pin-key{aspect-ratio:1;border-radius:50%;background:var(--bg2);border:1.5px solid var(--bdr);font-size:20px;font-weight:500;color:var(--txt);cursor:pointer;font-family:'Jost',sans-serif;transition:all .12s;display:flex;align-items:center;justify-content:center}
+.pin-key:hover{background:var(--bg3);border-color:var(--acc)}
+.pin-key:active{transform:scale(.92)}
+.pin-key.ghost{pointer-events:none;background:transparent;border-color:transparent}
+.pin-error{font-size:12px;color:var(--exp);margin-top:14px;min-height:18px;text-align:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .3s;z-index:9998;white-space:nowrap;font-family:'Jost',sans-serif}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
 
+<div class="toast" id="toast-msg"></div>
+
+<div id="pin-screen" class="pin-screen" style="display:none">
+  <div class="pin-brand"><em>✿</em> odette</div>
+  <div class="pin-sub" id="pin-sub-text">Enter your PIN</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-pad">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key ghost"></button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key" onclick="pinBackspace()"><i class="ti ti-backspace"></i></button>
+  </div>
+  <div class="pin-error" id="pin-error-msg"></div>
+</div>
+
+<div class="app" id="appRoot">
+  <nav class="nav">
+    <span class="brand"><em>✿</em> odette</span>
+    <button class="nav-btn active" id="nav-home" onclick="go('home')">
+      <i class="ti ti-home"></i><span id="nl-home">Home</span>
+    </button>
+    <button class="nav-btn" id="nav-add" onclick="go('add')">
+      <i class="ti ti-plus"></i><span id="nl-add">Add</span>
+    </button>
+    <button class="nav-btn" id="nav-calendar" onclick="go('calendar')">
+      <i class="ti ti-calendar"></i><span id="nl-cal">Cal</span>
+    </button>
+    <button class="nav-btn" id="nav-history" onclick="go('history')">
+      <i class="ti ti-chart-bar"></i><span id="nl-hist">History</span>
+    </button>
+    <button class="nav-btn" id="nav-currency" onclick="go('currency')">
+      <i class="ti ti-currency-dollar"></i><span id="nl-conv">Convert</span>
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="go('settings')">
+      <i class="ti ti-settings"></i><span id="nl-set">Settings</span>
+    </button>
+  </nav>
+
+  <div class="content">
+
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="hero">
+        <div class="hero-lbl" id="h-lbl-bal">total balance</div>
+        <div class="hero-amt" id="hero-bal">$0.00</div>
+        <div class="hero-sub" id="hero-sub">0 transactions</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-lbl"><i class="ti ti-arrow-down-circle" style="color:var(--inc)"></i><span id="h-lbl-inc">Income</span></div>
+          <div class="stat-val inc" id="stat-inc">$0.00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl"><i class="ti ti-arrow-up-circle" style="color:var(--exp)"></i><span id="h-lbl-spent">Spent</span></div>
+          <div class="stat-val exp" id="stat-exp">$0.00</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:500;color:var(--txt2)" id="h-lbl-recent">Recent</div>
+        <div id="tx-count" style="font-size:11px;color:var(--txt3)"></div>
+      </div>
+      <div id="home-list"></div>
+    </div>
+
+    <!-- ADD -->
+    <div id="page-add" class="page">
+      <div class="card">
+        <div class="form-title" id="f-title">New transaction</div>
+        <div class="type-toggle">
+          <button class="type-btn is-inc" id="tbtn-income" onclick="setType('income')">
+            <i class="ti ti-arrow-down-circle"></i><span id="f-lbl-inc">Income</span>
+          </button>
+          <button class="type-btn" id="tbtn-expense" onclick="setType('expense')">
+            <i class="ti ti-arrow-up-circle"></i><span id="f-lbl-exp">Expense</span>
+          </button>
+        </div>
+        <div class="form-grid">
+          <div class="fg"><label id="f-lbl-amt">Amount</label><input type="number" id="f-amount" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="fg"><label id="f-lbl-cat">Category</label><select id="f-cat"></select></div>
+          <div class="fg full"><label id="f-lbl-desc">Description</label><input type="text" id="f-desc" placeholder="What was this for?"></div>
+          <div class="fg full"><label id="f-lbl-date">Date</label><input type="date" id="f-date"></div>
+        </div>
+        <button class="submit-btn" onclick="addTx()"><i class="ti ti-check"></i><span id="f-lbl-save">Save</span></button>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="page-calendar" class="page">
+      <div class="cal-head">
+        <button class="cal-nav-btn" onclick="calMove(-1)"><i class="ti ti-chevron-left"></i></button>
+        <div class="cal-month" id="cal-title"></div>
+        <button class="cal-nav-btn" onclick="calMove(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-detail" id="cal-detail" style="display:none">
+        <div class="cal-det-title" id="cal-det-title"></div>
+        <div class="cal-sum" id="cal-sum"></div>
+        <div id="cal-tx-list"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="page-history" class="page">
+      <div class="card">
+        <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px" id="ch-lbl-monthly">Monthly income vs expenses</div>
+        <div class="legend-row"><span><span class="ldot" style="background:var(--inc)"></span><span id="ch-leg-inc">Income</span></span><span><span class="ldot" style="background:var(--exp)"></span><span id="ch-leg-exp">Expenses</span></span></div>
+        <div style="position:relative;height:200px"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px" id="ch-lbl-cat">Spending by category</div>
+        <div class="legend-row" id="pie-legend"></div>
+        <div style="position:relative;height:190px"><canvas id="pieChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px" id="ch-lbl-bal">Running balance</div>
+        <div style="position:relative;height:170px"><canvas id="lineChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CURRENCY -->
+    <div id="page-currency" class="page">
+      <div class="card">
+        <div class="form-title">Currency converter</div>
+        <div class="calc-sub" id="cc-rate-info">Loading rates…</div>
+        <div class="calc-row">
+          <div class="fg"><label id="cc-lbl-amt">Amount</label><input type="number" id="cc-amount" value="1" min="0" step="any" oninput="doConvert()"></div>
+          <div class="calc-mid"><button class="swap-btn" onclick="swapCur()"><i class="ti ti-arrows-right-left"></i></button></div>
+          <div class="fg"><label id="cc-lbl-res">Result</label><input type="number" id="cc-result" readonly style="font-weight:500;color:var(--acc)"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="fg"><label id="cc-lbl-from">From</label><select id="cc-from" onchange="doConvert()"></select></div>
+          <div class="fg"><label id="cc-lbl-to">To</label><select id="cc-to" onchange="doConvert()"></select></div>
+        </div>
+        <div class="calc-result">
+          <div class="calc-result-num" id="cc-big">—</div>
+          <div class="calc-result-lbl" id="cc-lbl">Enter an amount</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px" id="cc-lbl-quick">Quick convert</div>
+        <div class="rate-grid" id="quick-rates"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="page-settings" class="page">
+
+      <div class="settings-sec">
+        <h3 id="s-lbl-lang">Language &amp; currency</h3>
+        <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:.06em">Language</div>
+        <div class="lang-grid" id="lang-grid"></div>
+        <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:.06em" id="s-lbl-cur">Display currency</div>
+        <select id="cur-select" onchange="pickCurrency(this.value)" style="background:var(--bg3);border:1.5px solid var(--bdr);border-radius:var(--rad-sm);color:var(--txt);padding:9px 11px;font-size:13px;font-family:'Jost',sans-serif;width:100%;outline:none"></select>
+      </div>
+
+      <div class="settings-sec">
+        <h3 id="s-lbl-theme">Theme</h3>
+        <div class="theme-grid" id="theme-grid"></div>
+      </div>
+
+      <div class="settings-sec">
+        <h3 id="s-lbl-cats">Categories</h3>
+        <div class="cat-list" id="cat-list"></div>
+        <div class="add-row">
+          <input type="text" id="new-cat" placeholder="New category…">
+          <button onclick="addCat()"><i class="ti ti-plus"></i></button>
+        </div>
+      </div>
+
+      <div class="settings-sec">
+        <h3 id="s-lbl-backup">Backup &amp; restore</h3>
+        <div style="font-size:13px;color:var(--txt2);margin-bottom:12px" id="s-lbl-backup-desc">Export your data to move it to another device, or import a backup.</div>
+        <div class="backup-btns">
+          <button class="backup-btn" onclick="exportData()"><i class="ti ti-download"></i><span id="s-lbl-export">Export</span></button>
+          <label class="backup-btn outline" style="cursor:pointer"><i class="ti ti-upload"></i><span id="s-lbl-import">Import</span><input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+        </div>
+      </div>
+
+      <div class="settings-sec">
+        <h3 id="s-lbl-pin">PIN lock</h3>
+        <div id="pin-status-txt" style="font-size:13px;color:var(--txt2);margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="pin-action-btns"></div>
+      </div>
+
+      <div class="settings-sec" style="border-color:var(--exp)">
+        <h3 style="color:var(--exp)" id="s-lbl-danger">Danger zone</h3>
+        <button class="danger-btn" onclick="clearAll()" id="s-lbl-clear">Clear all data</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const DEFAULT_CATS = ['Allowance','Salary','Food','Transport','Entertainment','Shopping','Health','Bills','Savings','Gift','Other'];
+const DEFAULT_CATS_LANG = {
+  en: ['Allowance','Salary','Food','Transport','Entertainment','Shopping','Health','Bills','Savings','Gift','Other'],
+  es: ['Mesada','Salario','Comida','Transporte','Entretenimiento','Compras','Salud','Facturas','Ahorros','Regalo','Otro'],
+  fr: ['Allocation','Salaire','Nourriture','Transport','Divertissement','Shopping','Santé','Factures','Épargne','Cadeau','Autre'],
+  de: ['Taschengeld','Gehalt','Essen','Transport','Unterhaltung','Einkaufen','Gesundheit','Rechnungen','Ersparnisse','Geschenk','Sonstiges'],
+  ja: ['お小遣い','給料','食費','交通費','娯楽','買い物','医療費','光熱費','貯蓄','ギフト','その他'],
+  zh: ['零花钱','薪资','餐饮','交通','娱乐','购物','医疗','账单','储蓄','礼品','其他'],
+  pt: ['Mesada','Salário','Alimentação','Transporte','Entretenimento','Compras','Saúde','Contas','Poupança','Presente','Outro'],
+};
+const THEMES = [
+  {id:'default',label:'Odette',dot:'#5BAD8F'},
+  {id:'sage',label:'Sage',dot:'#7BAF8E'},
+  {id:'forest',label:'Forest',dot:'#3D7A5E'},
+  {id:'dark',label:'Night',dot:'#6EC4A0'},
+  {id:'cream',label:'Cream',dot:'#8AB89A'},
+  {id:'rose',label:'Blush',dot:'#D4848A'},
+  {id:'sky',label:'Sky',dot:'#6BA4C8'},
+];
+const PIE_COLS = ['#5BAD8F','#D97B7B','#7BA4C8','#C8A45B','#A07BC8','#C85B8F','#7BC8B4','#C87B5B','#8FAD5B','#7B8FAD','#AD7B8F'];
+const LANG_LIST = [
+  {code:'en',label:'English',flag:'🇺🇸'},
+  {code:'es',label:'Español',flag:'🇪🇸'},
+  {code:'fr',label:'Français',flag:'🇫🇷'},
+  {code:'de',label:'Deutsch',flag:'🇩🇪'},
+  {code:'ja',label:'日本語',flag:'🇯🇵'},
+  {code:'zh',label:'中文',flag:'🇨🇳'},
+  {code:'pt',label:'Português',flag:'🇧🇷'},
+];
+const DISP_CURRENCIES = [
+  {code:'USD',sym:'$',name:'US Dollar',flag:'🇺🇸'},
+  {code:'EUR',sym:'€',name:'Euro',flag:'🇪🇺'},
+  {code:'GBP',sym:'£',name:'British Pound',flag:'🇬🇧'},
+  {code:'JPY',sym:'¥',name:'Japanese Yen',flag:'🇯🇵'},
+  {code:'AUD',sym:'A$',name:'Australian Dollar',flag:'🇦🇺'},
+  {code:'CAD',sym:'C$',name:'Canadian Dollar',flag:'🇨🇦'},
+  {code:'CHF',sym:'Fr',name:'Swiss Franc',flag:'🇨🇭'},
+  {code:'CNY',sym:'¥',name:'Chinese Yuan',flag:'🇨🇳'},
+  {code:'INR',sym:'₹',name:'Indian Rupee',flag:'🇮🇳'},
+  {code:'MXN',sym:'MX$',name:'Mexican Peso',flag:'🇲🇽'},
+  {code:'BRL',sym:'R$',name:'Brazilian Real',flag:'🇧🇷'},
+  {code:'KRW',sym:'₩',name:'South Korean Won',flag:'🇰🇷'},
+  {code:'SGD',sym:'S$',name:'Singapore Dollar',flag:'🇸🇬'},
+  {code:'SEK',sym:'kr',name:'Swedish Krona',flag:'🇸🇪'},
+  {code:'AED',sym:'د.إ',name:'UAE Dirham',flag:'🇦🇪'},
+  {code:'THB',sym:'฿',name:'Thai Baht',flag:'🇹🇭'},
+  {code:'ZAR',sym:'R',name:'South African Rand',flag:'🇿🇦'},
+];
+const FX_QUICK = ['EUR','GBP','JPY','AUD','CAD','INR'];
+const FX_ALL = ['USD','EUR','GBP','JPY','AUD','CAD','CHF','CNY','INR','MXN','BRL','KRW','SGD','SEK','AED','THB','ZAR'];
+
+// ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
+const TR = {
+  en:{bal:'total balance',txns:'transactions',inc:'Income',spent:'Spent',recent:'Recent',
+    noTx:'No transactions yet.',tapAdd:'Tap Add to get started.',
+    newTx:'New transaction',incBtn:'Income',expBtn:'Expense',
+    amt:'Amount',cat:'Category',desc:'Description',date:'Date',save:'Save',
+    invalidAmt:'Enter a valid amount',
+    mChart:'Monthly income vs expenses',cChart:'Spending by category',bChart:'Running balance',
+    legInc:'Income',legExp:'Expenses',noCatExp:'No expenses yet',
+    fromLbl:'From',toLbl:'To',quickConv:'Quick convert',
+    langCur:'Language & currency',dispCur:'Display currency',
+    themeT:'Theme',catsT:'Categories',newCatPh:'New category…',
+    backupT:'Backup & restore',backupDesc:'Export your data to move it to another device, or import a backup.',
+    exportT:'Export',importT:'Import',
+    pinT:'PIN lock',pinOn:'🔒 PIN lock is on',pinOff:'🔓 No PIN set',
+    setPin:'Set PIN',changePin:'Change PIN',removePin:'Remove PIN',
+    choosePin:'Choose a 4-digit PIN',confirmPin:'Confirm your PIN',enterPin:'Enter your PIN',
+    enterOld:'Enter current PIN',enterNew:'Enter new PIN',confirmNew:'Confirm new PIN',
+    wrongPin:'Wrong PIN, try again',noMatch:"PINs don't match, try again",
+    pinSet:'PIN set ✿',pinUpdated:'PIN updated ✿',pinRemoved:'PIN removed',
+    dangerT:'Danger zone',clearBtn:'Clear all data',
+    home:'Home',add:'Add',cal:'Calendar',hist:'History',conv:'Convert',sett:'Settings',
+    deleted:'Deleted',cleared:'Data cleared',
+    exported:'Data exported ✿',imported:'Data imported ✿',
+    exists:'Already exists',catAdded:'Category added',
+    removePinQ:'Remove PIN lock?',clearQ:'Delete all transactions? Cannot be undone.',
+    deleteQ:'Delete this transaction?',importQ:'This will replace all your data. Continue?',
+    badFile:'Invalid backup file',cantRead:'Could not read file'},
+  es:{bal:'saldo total',txns:'transacciones',inc:'Ingresos',spent:'Gastado',recent:'Recientes',
+    noTx:'Sin transacciones aún.',tapAdd:'Toca Añadir para comenzar.',
+    newTx:'Nueva transacción',incBtn:'Ingreso',expBtn:'Gasto',
+    amt:'Cantidad',cat:'Categoría',desc:'Descripción',date:'Fecha',save:'Guardar',
+    invalidAmt:'Ingresa una cantidad válida',
+    mChart:'Ingresos vs gastos mensuales',cChart:'Gastos por categoría',bChart:'Saldo acumulado',
+    legInc:'Ingresos',legExp:'Gastos',noCatExp:'Sin gastos aún',
+    fromLbl:'De',toLbl:'A',quickConv:'Conversión rápida',
+    langCur:'Idioma y moneda',dispCur:'Moneda de visualización',
+    themeT:'Tema',catsT:'Categorías',newCatPh:'Nueva categoría…',
+    backupT:'Copia de seguridad',backupDesc:'Exporta tus datos para moverlos a otro dispositivo.',
+    exportT:'Exportar',importT:'Importar',
+    pinT:'PIN de bloqueo',pinOn:'🔒 PIN activado',pinOff:'🔓 Sin PIN',
+    setPin:'Establecer PIN',changePin:'Cambiar PIN',removePin:'Eliminar PIN',
+    choosePin:'Elige un PIN de 4 dígitos',confirmPin:'Confirma tu PIN',enterPin:'Ingresa tu PIN',
+    enterOld:'PIN actual',enterNew:'Nuevo PIN',confirmNew:'Confirmar nuevo PIN',
+    wrongPin:'PIN incorrecto, intenta de nuevo',noMatch:'Los PIN no coinciden',
+    pinSet:'PIN establecido ✿',pinUpdated:'PIN actualizado ✿',pinRemoved:'PIN eliminado',
+    dangerT:'Zona de peligro',clearBtn:'Borrar todos los datos',
+    home:'Inicio',add:'Añadir',cal:'Calendario',hist:'Historial',conv:'Convertir',sett:'Ajustes',
+    deleted:'Eliminado',cleared:'Datos borrados',
+    exported:'Datos exportados ✿',imported:'Datos importados ✿',
+    exists:'Ya existe',catAdded:'Categoría añadida',
+    removePinQ:'¿Eliminar el PIN?',clearQ:'¿Borrar todas las transacciones?',
+    deleteQ:'¿Eliminar esta transacción?',importQ:'Esto reemplazará tus datos. ¿Continuar?',
+    badFile:'Archivo no válido',cantRead:'No se pudo leer el archivo'},
+  fr:{bal:'solde total',txns:'transactions',inc:'Revenus',spent:'Dépensé',recent:'Récents',
+    noTx:'Aucune transaction.',tapAdd:'Appuyez sur Ajouter.',
+    newTx:'Nouvelle transaction',incBtn:'Revenu',expBtn:'Dépense',
+    amt:'Montant',cat:'Catégorie',desc:'Description',date:'Date',save:'Enregistrer',
+    invalidAmt:'Entrez un montant valide',
+    mChart:'Revenus vs dépenses',cChart:'Dépenses par catégorie',bChart:'Solde cumulé',
+    legInc:'Revenus',legExp:'Dépenses',noCatExp:'Aucune dépense',
+    fromLbl:'De',toLbl:'À',quickConv:'Conversion rapide',
+    langCur:'Langue et devise',dispCur:"Devise d'affichage",
+    themeT:'Thème',catsT:'Catégories',newCatPh:'Nouvelle catégorie…',
+    backupT:'Sauvegarde',backupDesc:'Exportez vos données pour les transférer.',
+    exportT:'Exporter',importT:'Importer',
+    pinT:'Code PIN',pinOn:'🔒 PIN activé',pinOff:'🔓 Sans PIN',
+    setPin:'Définir PIN',changePin:'Changer PIN',removePin:'Supprimer PIN',
+    choosePin:'Choisissez un PIN à 4 chiffres',confirmPin:'Confirmez votre PIN',enterPin:'Entrez votre PIN',
+    enterOld:'PIN actuel',enterNew:'Nouveau PIN',confirmNew:'Confirmer nouveau PIN',
+    wrongPin:'PIN incorrect',noMatch:'Les PIN ne correspondent pas',
+    pinSet:'PIN défini ✿',pinUpdated:'PIN mis à jour ✿',pinRemoved:'PIN supprimé',
+    dangerT:'Zone de danger',clearBtn:'Effacer les données',
+    home:'Accueil',add:'Ajouter',cal:'Calendrier',hist:'Historique',conv:'Convertir',sett:'Paramètres',
+    deleted:'Supprimé',cleared:'Données effacées',
+    exported:'Données exportées ✿',imported:'Données importées ✿',
+    exists:'Existe déjà',catAdded:'Catégorie ajoutée',
+    removePinQ:'Supprimer le PIN ?',clearQ:'Supprimer toutes les transactions ?',
+    deleteQ:'Supprimer cette transaction ?',importQ:'Cela remplacera vos données. Continuer ?',
+    badFile:'Fichier invalide',cantRead:'Impossible de lire le fichier'},
+  de:{bal:'gesamtguthaben',txns:'Transaktionen',inc:'Einnahmen',spent:'Ausgaben',recent:'Zuletzt',
+    noTx:'Noch keine Transaktionen.',tapAdd:'Tippe auf Hinzufügen.',
+    newTx:'Neue Transaktion',incBtn:'Einnahme',expBtn:'Ausgabe',
+    amt:'Betrag',cat:'Kategorie',desc:'Beschreibung',date:'Datum',save:'Speichern',
+    invalidAmt:'Gib einen gültigen Betrag ein',
+    mChart:'Einnahmen vs. Ausgaben',cChart:'Ausgaben nach Kategorie',bChart:'Kontostand',
+    legInc:'Einnahmen',legExp:'Ausgaben',noCatExp:'Keine Ausgaben',
+    fromLbl:'Von',toLbl:'Nach',quickConv:'Schnellumrechnung',
+    langCur:'Sprache & Währung',dispCur:'Anzeigewährung',
+    themeT:'Thema',catsT:'Kategorien',newCatPh:'Neue Kategorie…',
+    backupT:'Datensicherung',backupDesc:'Daten exportieren und auf ein anderes Gerät übertragen.',
+    exportT:'Exportieren',importT:'Importieren',
+    pinT:'PIN-Sperre',pinOn:'🔒 PIN aktiv',pinOff:'🔓 Kein PIN',
+    setPin:'PIN setzen',changePin:'PIN ändern',removePin:'PIN entfernen',
+    choosePin:'4-stelligen PIN wählen',confirmPin:'PIN bestätigen',enterPin:'PIN eingeben',
+    enterOld:'Aktuellen PIN eingeben',enterNew:'Neuen PIN eingeben',confirmNew:'Neuen PIN bestätigen',
+    wrongPin:'Falscher PIN',noMatch:'PINs stimmen nicht überein',
+    pinSet:'PIN gesetzt ✿',pinUpdated:'PIN aktualisiert ✿',pinRemoved:'PIN entfernt',
+    dangerT:'Gefahrenzone',clearBtn:'Alle Daten löschen',
+    home:'Startseite',add:'Hinzufügen',cal:'Kalender',hist:'Verlauf',conv:'Umrechnen',sett:'Einstellungen',
+    deleted:'Gelöscht',cleared:'Daten gelöscht',
+    exported:'Daten exportiert ✿',imported:'Daten importiert ✿',
+    exists:'Existiert bereits',catAdded:'Kategorie hinzugefügt',
+    removePinQ:'PIN entfernen?',clearQ:'Alle Transaktionen löschen?',
+    deleteQ:'Diese Transaktion löschen?',importQ:'Aktuelle Daten werden ersetzt. Fortfahren?',
+    badFile:'Ungültige Datei',cantRead:'Datei nicht lesbar'},
+  ja:{bal:'残高合計',txns:'取引',inc:'収入',spent:'支出',recent:'最近',
+    noTx:'取引がありません。',tapAdd:'追加ボタンから始めましょう。',
+    newTx:'新しい取引',incBtn:'収入',expBtn:'支出',
+    amt:'金額',cat:'カテゴリ',desc:'説明',date:'日付',save:'保存',
+    invalidAmt:'有効な金額を入力してください',
+    mChart:'月次収支',cChart:'カテゴリ別支出',bChart:'残高推移',
+    legInc:'収入',legExp:'支出',noCatExp:'支出なし',
+    fromLbl:'から',toLbl:'へ',quickConv:'クイック換算',
+    langCur:'言語と通貨',dispCur:'表示通貨',
+    themeT:'テーマ',catsT:'カテゴリ',newCatPh:'新しいカテゴリ…',
+    backupT:'バックアップ',backupDesc:'データをエクスポートして別のデバイスに移動できます。',
+    exportT:'エクスポート',importT:'インポート',
+    pinT:'PINロック',pinOn:'🔒 PINロック有効',pinOff:'🔓 PINなし',
+    setPin:'PINを設定',changePin:'PINを変更',removePin:'PINを削除',
+    choosePin:'4桁のPINを選んでください',confirmPin:'PINを確認',enterPin:'PINを入力',
+    enterOld:'現在のPINを入力',enterNew:'新しいPINを入力',confirmNew:'新しいPINを確認',
+    wrongPin:'PINが違います',noMatch:'PINが一致しません',
+    pinSet:'PIN設定完了 ✿',pinUpdated:'PIN更新完了 ✿',pinRemoved:'PINを削除しました',
+    dangerT:'危険ゾーン',clearBtn:'全データを削除',
+    home:'ホーム',add:'追加',cal:'カレンダー',hist:'履歴',conv:'換算',sett:'設定',
+    deleted:'削除しました',cleared:'データを削除しました',
+    exported:'エクスポート完了 ✿',imported:'インポート完了 ✿',
+    exists:'すでに存在します',catAdded:'カテゴリを追加しました',
+    removePinQ:'PINを削除しますか？',clearQ:'全データを削除しますか？',
+    deleteQ:'この取引を削除しますか？',importQ:'現在のデータが置き換えられます。続けますか？',
+    badFile:'無効なファイル',cantRead:'ファイルを読み込めません'},
+  zh:{bal:'总余额',txns:'笔交易',inc:'收入',spent:'支出',recent:'最近',
+    noTx:'暂无交易记录。',tapAdd:'点击添加开始记录。',
+    newTx:'新建交易',incBtn:'收入',expBtn:'支出',
+    amt:'金额',cat:'分类',desc:'备注',date:'日期',save:'保存',
+    invalidAmt:'请输入有效金额',
+    mChart:'月度收支对比',cChart:'分类支出',bChart:'余额变化',
+    legInc:'收入',legExp:'支出',noCatExp:'暂无支出',
+    fromLbl:'从',toLbl:'换为',quickConv:'快速换算',
+    langCur:'语言与货币',dispCur:'显示货币',
+    themeT:'主题',catsT:'分类',newCatPh:'新建分类…',
+    backupT:'备份与恢复',backupDesc:'导出数据以便迁移到其他设备，或导入备份文件。',
+    exportT:'导出',importT:'导入',
+    pinT:'PIN 锁',pinOn:'🔒 PIN 已启用',pinOff:'🔓 未设置 PIN',
+    setPin:'设置 PIN',changePin:'修改 PIN',removePin:'删除 PIN',
+    choosePin:'请选择 4 位数字 PIN',confirmPin:'确认您的 PIN',enterPin:'请输入 PIN',
+    enterOld:'输入当前 PIN',enterNew:'输入新 PIN',confirmNew:'确认新 PIN',
+    wrongPin:'PIN 错误，请重试',noMatch:'两次 PIN 不一致',
+    pinSet:'PIN 已设置 ✿',pinUpdated:'PIN 已更新 ✿',pinRemoved:'PIN 已删除',
+    dangerT:'危险操作',clearBtn:'清除所有数据',
+    home:'主页',add:'添加',cal:'日历',hist:'历史',conv:'换算',sett:'设置',
+    deleted:'已删除',cleared:'数据已清除',
+    exported:'数据已导出 ✿',imported:'数据已导入 ✿',
+    exists:'已存在',catAdded:'分类已添加',
+    removePinQ:'确认删除 PIN？',clearQ:'确认删除所有交易？此操作不可撤销。',
+    deleteQ:'确认删除此交易？',importQ:'这将替换您当前所有数据，是否继续？',
+    badFile:'无效的备份文件',cantRead:'无法读取文件'},
+  pt:{bal:'saldo total',txns:'transações',inc:'Receita',spent:'Gasto',recent:'Recentes',
+    noTx:'Sem transações ainda.',tapAdd:'Toque em Adicionar.',
+    newTx:'Nova transação',incBtn:'Receita',expBtn:'Despesa',
+    amt:'Valor',cat:'Categoria',desc:'Descrição',date:'Data',save:'Salvar',
+    invalidAmt:'Digite um valor válido',
+    mChart:'Receita vs gastos mensais',cChart:'Gastos por categoria',bChart:'Saldo acumulado',
+    legInc:'Receita',legExp:'Despesas',noCatExp:'Sem despesas ainda',
+    fromLbl:'De',toLbl:'Para',quickConv:'Conversão rápida',
+    langCur:'Idioma e moeda',dispCur:'Moeda de exibição',
+    themeT:'Tema',catsT:'Categorias',newCatPh:'Nova categoria…',
+    backupT:'Backup',backupDesc:'Exporte seus dados para outro dispositivo.',
+    exportT:'Exportar',importT:'Importar',
+    pinT:'PIN de bloqueio',pinOn:'🔒 PIN ativo',pinOff:'🔓 Sem PIN',
+    setPin:'Definir PIN',changePin:'Alterar PIN',removePin:'Remover PIN',
+    choosePin:'Escolha um PIN de 4 dígitos',confirmPin:'Confirme seu PIN',enterPin:'Digite seu PIN',
+    enterOld:'PIN atual',enterNew:'Novo PIN',confirmNew:'Confirmar novo PIN',
+    wrongPin:'PIN incorreto',noMatch:'Os PINs não coincidem',
+    pinSet:'PIN definido ✿',pinUpdated:'PIN atualizado ✿',pinRemoved:'PIN removido',
+    dangerT:'Zona de perigo',clearBtn:'Apagar todos os dados',
+    home:'Início',add:'Adicionar',cal:'Calendário',hist:'Histórico',conv:'Converter',sett:'Configurações',
+    deleted:'Excluído',cleared:'Dados apagados',
+    exported:'Dados exportados ✿',imported:'Dados importados ✿',
+    exists:'Já existe',catAdded:'Categoria adicionada',
+    removePinQ:'Remover PIN?',clearQ:'Apagar todas as transações?',
+    deleteQ:'Excluir esta transação?',importQ:'Isso substituirá seus dados. Continuar?',
+    badFile:'Arquivo inválido',cantRead:'Não foi possível ler o arquivo'},
+};
+
+// ─── APP STATE ────────────────────────────────────────────────────────────────
+let APP = {
+  transactions: [],
+  categories: [...DEFAULT_CATS],
+  theme: 'default',
+  lang: 'en',
+  currency: 'USD'
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
+function tr(key) { return (TR[APP.lang] || TR.en)[key] || key; }
+function money(n) {
+  const cur = DISP_CURRENCIES.find(c => c.code === APP.currency) || DISP_CURRENCIES[0];
+  const dp = (cur.code === 'JPY' || cur.code === 'KRW') ? 0 : 2;
+  const suf = cur.code !== 'USD' ? ' ' + cur.code : '';
+  return cur.sym + Math.abs(n).toFixed(dp) + suf;
+}
+function toast(msg) {
+  const node = el('toast-msg');
+  node.textContent = msg;
+  node.classList.add('show');
+  setTimeout(function() { node.classList.remove('show'); }, 2200);
+}
+function saveApp() { try { localStorage.setItem('odette_v4', JSON.stringify(APP)); } catch(e) {} }
+function loadApp() { try { const r = localStorage.getItem('odette_v4'); if (r) APP = JSON.parse(r); } catch(e) {} }
+function applyTheme(id) {
+  const root = el('appRoot');
+  root.className = 'app';
+  if (id !== 'default') root.classList.add('theme-' + id);
+}
+function setLabel(id, val) { const n = el(id); if (n) n.textContent = val; }
+function applyLang() {
+  setLabel('nl-home', tr('home')); setLabel('nl-add', tr('add'));
+  setLabel('nl-cal', tr('cal')); setLabel('nl-hist', tr('hist'));
+  setLabel('nl-conv', tr('conv')); setLabel('nl-set', tr('sett'));
+  setLabel('h-lbl-bal', tr('bal')); setLabel('h-lbl-inc', tr('inc'));
+  setLabel('h-lbl-spent', tr('spent')); setLabel('h-lbl-recent', tr('recent'));
+  setLabel('f-title', tr('newTx')); setLabel('f-lbl-inc', tr('incBtn'));
+  setLabel('f-lbl-exp', tr('expBtn')); setLabel('f-lbl-amt', tr('amt'));
+  setLabel('f-lbl-cat', tr('cat')); setLabel('f-lbl-desc', tr('desc'));
+  setLabel('f-lbl-date', tr('date')); setLabel('f-lbl-save', tr('save'));
+  setLabel('ch-lbl-monthly', tr('mChart')); setLabel('ch-lbl-cat', tr('cChart'));
+  setLabel('ch-lbl-bal', tr('bChart')); setLabel('ch-leg-inc', tr('legInc'));
+  setLabel('ch-leg-exp', tr('legExp')); setLabel('cc-lbl-amt', tr('amt'));
+  setLabel('cc-lbl-from', tr('fromLbl')); setLabel('cc-lbl-to', tr('toLbl'));
+  setLabel('cc-lbl-quick', tr('quickConv'));
+  setLabel('s-lbl-lang', tr('langCur')); setLabel('s-lbl-cur', tr('dispCur'));
+  setLabel('s-lbl-theme', tr('themeT')); setLabel('s-lbl-cats', tr('catsT'));
+  setLabel('s-lbl-backup', tr('backupT')); setLabel('s-lbl-backup-desc', tr('backupDesc'));
+  setLabel('s-lbl-export', tr('exportT')); setLabel('s-lbl-import', tr('importT'));
+  setLabel('s-lbl-pin', tr('pinT')); setLabel('s-lbl-danger', tr('dangerT'));
+  setLabel('s-lbl-clear', tr('clearBtn'));
+  const nci = el('new-cat'); if (nci) nci.placeholder = tr('newCatPh');
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function go(page) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  el('page-' + page).classList.add('active');
+  el('nav-' + page).classList.add('active');
+  if (page === 'home') renderHome();
+  if (page === 'add') initAdd();
+  if (page === 'calendar') renderCal();
+  if (page === 'history') renderHistory();
+  if (page === 'currency') initCurrency();
+  if (page === 'settings') renderSettings();
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
+function renderHome() {
+  var inc = 0, exp = 0;
+  APP.transactions.forEach(function(tx) {
+    if (tx.type === 'income') inc += tx.amount; else exp += tx.amount;
+  });
+  var bal = inc - exp;
+  var balEl = el('hero-bal');
+  balEl.textContent = (bal < 0 ? '-' : '') + money(bal);
+  balEl.className = 'hero-amt' + (bal < 0 ? ' neg' : '');
+  el('hero-sub').textContent = APP.transactions.length + ' ' + tr('txns');
+  el('stat-inc').textContent = money(inc);
+  el('stat-exp').textContent = money(exp);
+  el('tx-count').textContent = APP.transactions.length + ' entries';
+  var sorted = APP.transactions.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); }).slice(0, 10);
+  var list = el('home-list');
+  if (!sorted.length) {
+    list.innerHTML = '<div class="empty"><i class="ti ti-leaf"></i>' + tr('noTx') + '<br>' + tr('tapAdd') + '</div>';
+    return;
+  }
+  list.innerHTML = sorted.map(txHTML).join('');
+}
+function txHTML(tx) {
+  return '<div class="tx-item">' +
+    '<div class="tx-icon ' + tx.type + '"><i class="ti ti-arrow-' + (tx.type === 'income' ? 'down' : 'up') + '"></i></div>' +
+    '<div class="tx-body"><div class="tx-name">' + (tx.desc || tx.category) + '</div><div class="tx-meta">' + tx.category + ' · ' + tx.date + '</div></div>' +
+    '<div class="tx-amt ' + tx.type + '">' + (tx.type === 'income' ? '+' : '-') + money(tx.amount) + '</div>' +
+    '<button class="tx-del" onclick="delTx(\'' + tx.id + '\')" aria-label="Delete"><i class="ti ti-trash"></i></button>' +
+    '</div>';
+}
+function delTx(id) {
+  if (!confirm(tr('deleteQ'))) return;
+  APP.transactions = APP.transactions.filter(function(tx) { return tx.id !== id; });
+  saveApp(); renderHome(); toast(tr('deleted'));
+}
+
+// ─── ADD ─────────────────────────────────────────────────────────────────────
+var curType = 'income';
+function initAdd() {
+  el('f-date').valueAsDate = new Date();
+  refreshCatDrop();
+}
+function setType(t) {
+  curType = t;
+  el('tbtn-income').className = 'type-btn' + (t === 'income' ? ' is-inc' : '');
+  el('tbtn-expense').className = 'type-btn' + (t === 'expense' ? ' is-exp' : '');
+}
+function refreshCatDrop() {
+  el('f-cat').innerHTML = APP.categories.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+}
+function addTx() {
+  var amount = parseFloat(el('f-amount').value);
+  if (!amount || amount <= 0) { toast(tr('invalidAmt')); return; }
+  APP.transactions.push({
+    id: Date.now().toString(), type: curType, amount: amount,
+    category: el('f-cat').value,
+    desc: el('f-desc').value.trim(),
+    date: el('f-date').value || new Date().toISOString().slice(0, 10)
+  });
+  saveApp();
+  el('f-amount').value = ''; el('f-desc').value = '';
+  toast((curType === 'income' ? '+ ' : '- ') + money(amount) + ' ' + tr('save') + '!');
+  go('home');
+}
+
+// ─── CALENDAR ─────────────────────────────────────────────────────────────────
+var calYear, calMonth, calSel = null;
+function renderCal() {
+  if (calYear === undefined) { var n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); }
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  el('cal-title').textContent = months[calMonth] + ' ' + calYear;
+  var first = new Date(calYear, calMonth, 1).getDay();
+  var days = new Date(calYear, calMonth + 1, 0).getDate();
+  var todayStr = new Date().toISOString().slice(0, 10);
+  var html = ['Su','Mo','Tu','We','Th','Fr','Sa'].map(function(d) { return '<div class="cal-dh">' + d + '</div>'; }).join('');
+  for (var i = 0; i < first; i++) html += '<div class="cal-cell empty"></div>';
+  for (var d = 1; d <= days; d++) {
+    var ds = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    var txs = APP.transactions.filter(function(tx) { return tx.date === ds; });
+    var cls = 'cal-cell';
+    if (ds === todayStr) cls += ' today';
+    if (ds === calSel) cls += ' selected';
+    var dots = (txs.some(function(tx) { return tx.type === 'income'; }) ? '<div class="cdot inc"></div>' : '') +
+               (txs.some(function(tx) { return tx.type === 'expense'; }) ? '<div class="cdot exp"></div>' : '');
+    html += '<div class="' + cls + '" onclick="calSelect(\'' + ds + '\')">' +
+      '<div class="cal-dn">' + d + '</div>' + (dots ? '<div class="cal-dots">' + dots + '</div>' : '') + '</div>';
+  }
+  el('cal-grid').innerHTML = html;
+  if (calSel) renderCalDetail(calSel);
+}
+function calMove(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  calSel = null; el('cal-detail').style.display = 'none'; renderCal();
+}
+function calSelect(ds) { calSel = ds; renderCal(); renderCalDetail(ds); }
+function renderCalDetail(ds) {
+  var txs = APP.transactions.filter(function(tx) { return tx.date === ds; });
+  var det = el('cal-detail');
+  if (!txs.length) { det.style.display = 'none'; return; }
+  det.style.display = 'block';
+  var d = new Date(ds + 'T12:00:00');
+  el('cal-det-title').textContent = d.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+  var inc = txs.filter(function(tx) { return tx.type === 'income'; }).reduce(function(s, tx) { return s + tx.amount; }, 0);
+  var exp = txs.filter(function(tx) { return tx.type === 'expense'; }).reduce(function(s, tx) { return s + tx.amount; }, 0);
+  el('cal-sum').innerHTML = (inc ? '<span style="color:var(--inc)">+' + money(inc) + '</span>' : '') + (exp ? '<span style="color:var(--exp)">-' + money(exp) + '</span>' : '');
+  el('cal-tx-list').innerHTML = txs.map(txHTML).join('');
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+var barInst = null, pieInst = null, lineInst = null;
+function renderHistory() { renderBar(); renderPie(); renderLine(); }
+function monthlyData() {
+  var map = {};
+  APP.transactions.forEach(function(tx) {
+    var ym = tx.date.slice(0, 7);
+    if (!map[ym]) map[ym] = {inc:0,exp:0};
+    if (tx.type === 'income') map[ym].inc += tx.amount; else map[ym].exp += tx.amount;
+  });
+  var keys = Object.keys(map).sort().slice(-8);
+  var mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return {
+    labels: keys.map(function(k) { var p = k.split('-'); return mn[parseInt(p[1])-1] + ' ' + p[0].slice(2); }),
+    inc: keys.map(function(k) { return +map[k].inc.toFixed(2); }),
+    exp: keys.map(function(k) { return +map[k].exp.toFixed(2); })
+  };
+}
+function renderBar() {
+  var ctx = el('barChart').getContext('2d');
+  if (barInst) barInst.destroy();
+  var data = monthlyData();
+  barInst = new Chart(ctx, {type:'bar',data:{labels:data.labels,datasets:[
+    {label:tr('legInc'),data:data.inc,backgroundColor:'rgba(91,173,143,0.75)',borderRadius:5,borderSkipped:false},
+    {label:tr('legExp'),data:data.exp,backgroundColor:'rgba(217,123,123,0.75)',borderRadius:5,borderSkipped:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:'#8AABA0',font:{size:11}},grid:{display:false}},
+            y:{ticks:{color:'#8AABA0',font:{size:11},callback:function(v){return '$'+v;}},grid:{color:'rgba(91,173,143,0.08)'}}}}});
+}
+function renderPie() {
+  var ctx = el('pieChart').getContext('2d');
+  if (pieInst) pieInst.destroy();
+  var ct = {};
+  APP.transactions.filter(function(tx) { return tx.type === 'expense'; }).forEach(function(tx) { ct[tx.category] = (ct[tx.category] || 0) + tx.amount; });
+  var labels = Object.keys(ct);
+  var values = labels.map(function(l) { return +ct[l].toFixed(2); });
+  var colors = PIE_COLS.slice(0, labels.length);
+  var total = values.reduce(function(a, b) { return a + b; }, 0);
+  el('pie-legend').innerHTML = labels.map(function(l, i) {
+    return '<span><span class="ldot" style="background:' + colors[i] + '"></span>' + l + ' (' + (total ? Math.round(ct[l]/total*100) : 0) + '%)</span>';
+  }).join('');
+  if (!labels.length) {
+    el('pie-legend').innerHTML = '<span style="color:var(--txt3)">' + tr('noCatExp') + '</span>';
+    pieInst = new Chart(ctx, {type:'doughnut',data:{labels:['None'],datasets:[{data:[1],backgroundColor:['#E4F0EB']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+    return;
+  }
+  pieInst = new Chart(ctx, {type:'doughnut',data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
+}
+function renderLine() {
+  var ctx = el('lineChart').getContext('2d');
+  if (lineInst) lineInst.destroy();
+  var sorted = APP.transactions.slice().sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+  var running = 0;
+  var points = sorted.map(function(tx) { running += tx.type === 'income' ? tx.amount : -tx.amount; return {x:tx.date,y:+running.toFixed(2)}; });
+  if (!points.length) return;
+  lineInst = new Chart(ctx, {type:'line',data:{labels:points.map(function(p){return p.x;}),datasets:[{label:'Balance',data:points.map(function(p){return p.y;}),borderColor:'#5BAD8F',backgroundColor:'rgba(91,173,143,0.1)',fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#5BAD8F'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#8AABA0',font:{size:10},maxTicksLimit:6},grid:{display:false}},
+              y:{ticks:{color:'#8AABA0',font:{size:11},callback:function(v){return '$'+v;}},grid:{color:'rgba(91,173,143,0.08)'}}}}});
+}
+
+// ─── CURRENCY ─────────────────────────────────────────────────────────────────
+var fxRates = null, fxTime = 0;
+function initCurrency() {
+  var opts = FX_ALL.map(function(code) {
+    var c = DISP_CURRENCIES.find(function(x) { return x.code === code; });
+    return '<option value="' + code + '">' + (c ? c.flag + ' ' : '') + code + (c ? ' — ' + c.name : '') + '</option>';
+  }).join('');
+  el('cc-from').innerHTML = opts; el('cc-to').innerHTML = opts;
+  el('cc-from').value = 'USD'; el('cc-to').value = 'EUR';
+  if (!fxRates || Date.now() - fxTime > 3600000) {
+    el('cc-rate-info').textContent = 'Loading rates…';
+    fetch('https://open.er-api.com/v6/latest/USD')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.rates) { fxRates = data.rates; fxTime = Date.now(); el('cc-rate-info').textContent = '✓ Live rates · ' + new Date().toLocaleTimeString(); }
+        else { useFallbackRates(); }
+        doConvert(); renderQuickRates();
+      }).catch(function() { useFallbackRates(); doConvert(); renderQuickRates(); });
+  } else { doConvert(); renderQuickRates(); }
+}
+function useFallbackRates() {
+  fxRates = {USD:1,EUR:0.92,GBP:0.79,JPY:149.5,AUD:1.54,CAD:1.36,CHF:0.9,CNY:7.24,INR:83.1,MXN:17.1,BRL:4.97,KRW:1325,SGD:1.34,SEK:10.4,AED:3.67,THB:35.1,ZAR:18.6};
+  el('cc-rate-info').textContent = '⚠ Approximate rates (offline)';
+}
+function doConvert() {
+  if (!fxRates) return;
+  var amount = parseFloat(el('cc-amount').value) || 0;
+  var from = el('cc-from').value, to = el('cc-to').value;
+  var result = (amount / (fxRates[from] || 1)) * (fxRates[to] || 1);
+  el('cc-result').value = result.toFixed(4);
+  var fc = DISP_CURRENCIES.find(function(c) { return c.code === from; });
+  var tc = DISP_CURRENCIES.find(function(c) { return c.code === to; });
+  el('cc-big').textContent = result.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}) + ' ' + to;
+  el('cc-lbl').textContent = amount + ' ' + from + (fc?' '+fc.flag:'') + ' = ' + result.toFixed(4) + ' ' + to + (tc?' '+tc.flag:'');
+  renderQuickRates();
+}
+function swapCur() { var f = el('cc-from').value, t = el('cc-to').value; el('cc-from').value = t; el('cc-to').value = f; doConvert(); }
+function renderQuickRates() {
+  if (!fxRates) return;
+  var from = el('cc-from').value, amount = parseFloat(el('cc-amount').value) || 1;
+  el('quick-rates').innerHTML = FX_QUICK.map(function(code) {
+    if (code === from) return '';
+    var c = DISP_CURRENCIES.find(function(x) { return x.code === code; });
+    var val = ((amount / (fxRates[from]||1)) * (fxRates[code]||1)).toFixed(2);
+    var active = el('cc-to').value === code ? ' active' : '';
+    return '<div class="rate-card' + active + '" onclick="setQuickTo(\'' + code + '\')">' +
+      '<div class="rate-flag">' + (c?c.flag:'') + '</div>' +
+      '<div class="rate-code">' + code + '</div>' +
+      '<div style="font-size:11px;color:var(--acc);font-weight:500">' + val + '</div></div>';
+  }).join('');
+}
+function setQuickTo(code) { el('cc-to').value = code; doConvert(); }
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function renderSettings() {
+  // Language grid
+  el('lang-grid').innerHTML = LANG_LIST.map(function(ln) {
+    var active = APP.lang === ln.code;
+    return '<div class="lang-sw' + (active?' active':'') + '" onclick="pickLang(\'' + ln.code + '\')">' +
+      '<div style="font-size:18px;margin-bottom:2px">' + ln.flag + '</div>' + ln.label + '</div>';
+  }).join('');
+  // Currency dropdown
+  el('cur-select').innerHTML = DISP_CURRENCIES.map(function(c) {
+    return '<option value="' + c.code + '"' + (APP.currency === c.code ? ' selected' : '') + '>' + c.flag + ' ' + c.code + ' — ' + c.name + '</option>';
+  }).join('');
+  // Theme grid
+  el('theme-grid').innerHTML = THEMES.map(function(th) {
+    return '<div class="theme-sw' + (APP.theme === th.id ? ' active' : '') + '" onclick="pickTheme(\'' + th.id + '\')">' +
+      '<div class="theme-dot" style="background:' + th.dot + '"></div>' + th.label + '</div>';
+  }).join('');
+  // Categories
+  el('cat-list').innerHTML = APP.categories.map(function(c) {
+    return '<div class="cat-tag"><span>' + c + '</span><button class="cat-del" onclick="delCat(\'' + c + '\')"><i class="ti ti-x"></i></button></div>';
+  }).join('');
+  // PIN status
+  renderPinStatus();
+  // Apply translated labels
+  applyLang();
+}
+function pickTheme(id) { APP.theme = id; saveApp(); applyTheme(id); renderSettings(); }
+function pickLang(code) {
+  APP.lang = code;
+  // Reset categories to translated defaults if they are still the defaults
+  var prevDefaults = DEFAULT_CATS_LANG[APP.lang] || DEFAULT_CATS_LANG.en;
+  var curDefaults = Object.values(DEFAULT_CATS_LANG).find(function(cats) {
+    return cats.length === APP.categories.length && cats.every(function(c, i) { return c === APP.categories[i]; });
+  });
+  if (curDefaults) {
+    APP.categories = [...(DEFAULT_CATS_LANG[code] || DEFAULT_CATS_LANG.en)];
+  }
+  saveApp(); renderSettings(); renderHome();
+}
+function pickCurrency(code) { APP.currency = code; saveApp(); renderHome(); }
+function addCat() {
+  var v = el('new-cat').value.trim();
+  if (!v) return;
+  if (APP.categories.indexOf(v) !== -1) { toast(tr('exists')); return; }
+  APP.categories.push(v); saveApp(); el('new-cat').value = ''; renderSettings(); toast(tr('catAdded'));
+}
+function delCat(c) { APP.categories = APP.categories.filter(function(x) { return x !== c; }); saveApp(); renderSettings(); }
+function clearAll() {
+  if (!confirm(tr('clearQ'))) return;
+  APP.transactions = []; saveApp(); toast(tr('cleared')); go('home');
+}
+
+// ─── BACKUP ───────────────────────────────────────────────────────────────────
+function exportData() {
+  var blob = new Blob([JSON.stringify(APP, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'odette-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  toast(tr('exported'));
+}
+function importData(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var parsed = JSON.parse(ev.target.result);
+      if (!parsed.transactions) { toast(tr('badFile')); return; }
+      if (!confirm(tr('importQ'))) return;
+      APP = parsed; saveApp(); renderHome(); renderSettings(); toast(tr('imported'));
+    } catch(err) { toast(tr('cantRead')); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ─── PIN ──────────────────────────────────────────────────────────────────────
+var pinBuf = '';
+var pinMode = 'unlock';
+var pinTemp = '';
+function getPin() { try { return localStorage.getItem('odette_pin') || ''; } catch(e) { return ''; } }
+function savePin(p) { try { if (p) localStorage.setItem('odette_pin', p); else localStorage.removeItem('odette_pin'); } catch(e) {} }
+function updateDots() {
+  for (var i = 0; i < 4; i++) {
+    var d = el('pd' + i);
+    if (d) d.className = 'pin-dot' + (i < pinBuf.length ? ' filled' : '');
+  }
+}
+function showPin(mode, subText) {
+  pinMode = mode;
+  pinBuf = '';
+  el('pin-screen').style.display = 'flex';
+  el('pin-sub-text').textContent = subText;
+  el('pin-error-msg').textContent = '';
+  updateDots();
+}
+function hidePin() { el('pin-screen').style.display = 'none'; }
+function pinKey(k) {
+  if (pinBuf.length >= 4) return;
+  pinBuf += k;
+  updateDots();
+  if (pinBuf.length === 4) {
+    setTimeout(function() { processPin(); }, 120);
+  }
+}
+function pinBackspace() { if (pinBuf.length > 0) { pinBuf = pinBuf.slice(0, -1); updateDots(); } }
+function processPin() {
+  var entered = pinBuf;
+  if (pinMode === 'unlock') {
+    if (entered === getPin()) { hidePin(); }
+    else { el('pin-error-msg').textContent = tr('wrongPin'); pinBuf = ''; updateDots(); }
+  } else if (pinMode === 'set') {
+    pinTemp = entered;
+    showPin('confirm', tr('confirmPin'));
+  } else if (pinMode === 'confirm') {
+    if (entered === pinTemp) { savePin(entered); hidePin(); renderSettings(); toast(tr('pinSet')); pinTemp = ''; }
+    else { el('pin-error-msg').textContent = tr('noMatch'); pinBuf = ''; updateDots(); }
+  } else if (pinMode === 'change-old') {
+    if (entered === getPin()) { showPin('change-new', tr('enterNew')); }
+    else { el('pin-error-msg').textContent = tr('wrongPin'); pinBuf = ''; updateDots(); }
+  } else if (pinMode === 'change-new') {
+    pinTemp = entered;
+    showPin('change-confirm', tr('confirmNew'));
+  } else if (pinMode === 'change-confirm') {
+    if (entered === pinTemp) { savePin(entered); hidePin(); renderSettings(); toast(tr('pinUpdated')); pinTemp = ''; }
+    else { el('pin-error-msg').textContent = tr('noMatch'); pinBuf = ''; updateDots(); }
+  }
+}
+function renderPinStatus() {
+  var hasPin = !!getPin();
+  el('pin-status-txt').textContent = hasPin ? tr('pinOn') : tr('pinOff');
+  var btns = '';
+  if (!hasPin) {
+    btns = '<button class="backup-btn" onclick="showPin(\'set\',tr(\'choosePin\'))">' + tr('setPin') + '</button>';
+  } else {
+    btns = '<button class="backup-btn" onclick="showPin(\'change-old\',tr(\'enterOld\'))">' + tr('changePin') + '</button>' +
+           '<button class="backup-btn outline" onclick="removePIN()">' + tr('removePin') + '</button>';
+  }
+  el('pin-action-btns').innerHTML = btns;
+}
+function removePIN() {
+  if (!confirm(tr('removePinQ'))) return;
+  savePin(''); renderSettings(); toast(tr('pinRemoved'));
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  loadApp();
+  applyTheme(APP.theme);
+  applyLang();
+  renderHome();
+  if (getPin()) { showPin('unlock', tr('enterPin')); }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(function() {});
+  }
+  var deferredInstall = null;
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault(); deferredInstall = e;
+  });
+});
+</script>
+</body>
+</html>
